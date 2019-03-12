@@ -73,7 +73,7 @@ put the data you want to change in the request body as json (e.g. `{"device_name
 returns all device data
 
 #### Delete device
-`DELETE /devices/<string:device_id>
+`DELETE /devices/<string:device_id>`
 
 **Response**
 - `200 OK` and deleted device data on success
