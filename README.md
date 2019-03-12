@@ -37,11 +37,11 @@ Devices can be controlled by editing their state data
 `POST /devices`
 
 following data must be given as json in the request body:
---* **device_id** (str): internal id, must be unique
---* **device_name** (str): display name
---* **device_type** (str): type of device, e.g. Philips Hue Color Ambiance
---* **device_controller_address** (str): address of the device's controller
---* **device_data** (str): json string containing all data on the device's state (e.g. `{"data": "{\"on\": \"True\"}"
+- **device_id** (str): internal id, must be unique
+- **device_name** (str): display name
+- **device_type** (str): type of device, e.g. Philips Hue Color Ambiance
+- **device_controller_address** (str): address of the device's controller
+- **device_data** (str): json string containing all data on the device's state (e.g. `{"data": "{\"on\": \"True\"}"
 
 
 **Response**
