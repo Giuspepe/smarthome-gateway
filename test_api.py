@@ -8,7 +8,7 @@ import os
 valid_mock_device_1 = {
         "device_id": "1234",
         "device_name": "Hue color lamp 1",
-        "device_type": "Extended color light (Hue)",
+        "device_type": "Extended color light",
         "device_controller_address": "http://192.168.130.214/api/tAC901PfVfQMmNvrhc120uZeBa-Va8SNjc4vhtyh/1",
         "device_data": {
             "on": False,
@@ -91,8 +91,40 @@ class TestDeviceAPI:
         assert f'There is no device with device_id "invalid_device_id"' in rv
 
     def test_patch(self, client):
-        # TODO: write this test
-        assert 1 == 2
+        valid_device_id = valid_mock_device_1['device_id']
+        simple_device_attributes = ['device_name', 'device_type', 'device_controller_address']
+        for attribute in simple_device_attributes:
+            rv = client.patch(f'/devices/{valid_device_id}', json={attribute: 'changed_attribute_value12345'})
+            rv = json.loads(rv.data)
+            assert rv[attribute] == 'changed_attribute_value12345'
+
+
+
+        rv = client.patch(f'/devices/{valid_device_id}', json={'device_id': 'changed_device_id12345'})
+        rv = json.loads(rv.data)
+        assert rv['device_id'] == 'changed_device_id12345'
+        client.patch(f'/devices/changed_device_id12345', json={'device_id': '1234'})
+
+        changed_device_data = {
+            "on": True,
+            "bri": 1,
+            "hue": 1,
+            "sat": 1,
+            "effect": "blabla",
+            "xy": [
+                0.1,
+                0.2
+            ],
+            "ct": 3,
+            "alert": "lala",
+            "colormode": "z",
+            "mode": "test",
+            "reachable": False}
+
+        rv = client.patch(f'/devices/{valid_device_id}', json={'device_data': changed_device_data})
+        rv = json.loads(rv.data)
+        assert rv == 'Device type "changed_attribute_value12345" not implemented yet'
+        # TODO assert rv['device_data'] == changed_device_data
 
     def test_delete(self, client):
         # delete device

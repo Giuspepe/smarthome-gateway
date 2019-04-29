@@ -1,12 +1,10 @@
-# TODO: more endpoints? /devices/huelights, /devices/sensors, /devices/whatever ?
-
 from flask import Flask
 from flask_restful import Api, Resource, reqparse, fields, marshal
 import shelve
 import functools
 import copy
-import json
-from control_hue_lights import set_state
+import control_hue_lights
+import control_chromecast_audio
 
 app = Flask(__name__)
 api = Api(app)
@@ -14,6 +12,7 @@ api = Api(app)
 api.app.config['DATABASE'] = 'database_shelve'
 
 device_attributes = ['device_id', 'device_name', 'device_type', 'device_controller_address', 'device_data']
+
 
 def shelve_db_decorator(func):
     @functools.wraps(func)
@@ -43,6 +42,13 @@ class DeviceListAPI(Resource):
 
     @shelve_db_decorator
     def get(self):
+        for device in shelve_db['devices']:
+            # if needed: call respective API to get new device data
+            if 'Hue' in device['device_type']:
+                new_lights_info = control_hue_lights.get_light_info(device['device_controller_address'])
+                for key, val in new_lights_info['state'].items():
+                    device['device_data'][key] = val
+
         return shelve_db['devices'], 200
 
     @shelve_db_decorator
@@ -91,69 +97,45 @@ class DeviceAPI(Resource):
             return f'There is no device with device_id "{device_id}"', 404
         if len(device) == 1:
             # device found
-            return marshal(device[0], device_fields), 200
+            device = device[0]
+            # if needed: call respective API to get new device data
+            if 'Hue' in device['device_type']:
+                new_lights_info = control_hue_lights.get_light_info(device['device_controller_address'])
+                for key, val in new_lights_info['state'].items():
+                    device['device_data'][key] = val
+            return marshal(device, device_fields), 200
         if len(device) > 1:
             return f'Found {len(device)} devices with the same device_id', 500
 
     @shelve_db_decorator
     def patch(self, device_id):
-        # get copy of device you want to edit
+        args = self.reqparse.parse_args()
+        # get a copy of the device
         device = [device for device in enumerate(shelve_db['devices']) if device[1]['device_id'] == device_id]
         device_index = device[0][0]
         device = copy.deepcopy(device[0][1])
 
-        # check input
-        args = self.reqparse.parse_args()
-        # TODO: don't need this because regparse ensures that you can only enter device_id, device_name, device_type,...
-        if not set(list(args.keys())).issubset(device_attributes):
-            invalid_attributes = set(device_attributes) - set(list(args.keys()))
-            return f'You provided invalid attributes: {invalid_attributes}', 400
-
-        # 0. close db
         for key, val in args.items():
             if val is not None:
                 if key != 'device_data':
                     # change 'device_id', 'device_name', 'device_type', 'device_controller_address'
                     device[key] = val
                 else:
-                    # change hardware data (e.g. color of a light)
+                    # change device data (e.g. color of a light or the music station being played)
                     if 'Hue' in device['device_type']:
-                        # TODO: call hue api
-                        # 1. call respective API with data to be changed
-                        print('set state')
-                        print(key, val)
-                        #set_state(device_id, {key: val})
-                        pass
-                    elif 'another device type' in device['device_type']:
-                        # TODO: to be implemented
-                        # 0. close db?
-                        # 1. call respective API with data to be changed
-                        # 2. call respective API to get new device data
-                        # 3. open db again?
-                        # 4. write changed device data back to device
-                        pass
-                    elif 'custom device' in device['device_type']:
-                        # TODO: to be implemented
-                        # 0. close db?
-                        # 1. call respective API with data to be changed
-                        # 2. call respective API to get new device data
-                        # 3. open db again?
-                        # 4. write changed device data back to device
-                        pass
+                        control_hue_lights.set_state(device['device_controller_address'], val)
+                    elif device['device_type'] == 'Chromecast Audio':
+                        for subkey, subval in val.items():
+                            device['device_data'][subkey] = subval
+                        control_chromecast_audio.update(device, val)
                     else:
                         return f'Device type "{device["device_type"]}" not implemented yet', 400
 
-        # 2. call respective API to get new device data
-        # if 'Hue' in device['device_type']:
-        #     new_device_data = get(/lights/device_id) oder:
-        #     new_device_data = get_light_info(device_id)
-        #     new_device_data = new_device_data['state']
-        # elif 'another device type' in device['device_type']:
-        #     new_device_data = get(...)
-        # ...
-
-        # 3. open db again
-        # 4. device['device_data'] = new_device_data
+        # if needed: call respective API to get new device data
+        if 'Hue' in device['device_type']:
+            new_lights_info = control_hue_lights.get_light_info(device['device_controller_address'])
+            for key, val in new_lights_info['state'].items():
+                device['device_data'][key] = val
 
         # write back edited copy
         shelve_db['devices'][device_index] = device
@@ -175,4 +157,4 @@ api.add_resource(DeviceListAPI, '/devices', endpoint='devices')
 api.add_resource(DeviceAPI, '/devices/<device_id>', endpoint='device')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='::', port='80', debug=True)
