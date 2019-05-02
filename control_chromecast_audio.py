@@ -12,7 +12,7 @@ def update(device, device_data):
     port = device['device_data']['port']
     radio_address = device['device_data']['radio_station_url']
     volume = device['device_data']['volume']
-    base_command = [chromecast_script_name, f'--host={host}', f'--port={port}']
+    base_command = [chromecast_script_name, '--host={}'.format(host), '--port={}'.format(port)]
 
     # change volume
     if 'volume' in device_data:
@@ -22,7 +22,7 @@ def update(device, device_data):
     if 'state' in device_data or 'radio_address' in device_data:
         state = device['device_data']['state']
         if state == 'playing':
-            subprocess.run(base_command + ['play', radio_address], stdout=subprocess.DEVNULL)
+            subprocess.Popen(base_command + ['media', 'play', radio_address], stdout=subprocess.DEVNULL)
         else:
             subprocess.Popen(base_command + ['quit'], stdout=subprocess.DEVNULL)
 
