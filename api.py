@@ -56,7 +56,7 @@ class DeviceListAPI(Resource):
         args = self.reqparse.parse_args()
 
         if [device for device in shelve_db['devices'] if device['device_id'] == args['device_id']]:
-            return f'Device with device_id "{args["device_id"]}" already exists', 409
+            return 'Device with device_id "{}" already exists'.format(args["device_id"]), 409
 
         new_device = {
             'device_id': args['device_id'],
@@ -94,7 +94,7 @@ class DeviceAPI(Resource):
         device = [device for device in shelve_db['devices'] if device['device_id'] == device_id]
         if len(device) == 0:
             # device not found
-            return f'There is no device with device_id "{device_id}"', 404
+            return 'There is no device with device_id "{}"'.format(device_id), 404
         if len(device) == 1:
             # device found
             device = device[0]
@@ -105,7 +105,7 @@ class DeviceAPI(Resource):
                     device['device_data'][key] = val
             return marshal(device, device_fields), 200
         if len(device) > 1:
-            return f'Found {len(device)} devices with the same device_id', 500
+            return 'Found {} devices with the same device_id'.format(len(device)), 500
 
     @shelve_db_decorator
     def patch(self, device_id):
@@ -129,7 +129,7 @@ class DeviceAPI(Resource):
                             device['device_data'][subkey] = subval
                         control_chromecast_audio.update(device, val)
                     else:
-                        return f'Device type "{device["device_type"]}" not implemented yet', 400
+                        return 'Device type "{}" not implemented yet'.format(device["device_type"]), 400
 
         # if needed: call respective API to get new device data
         if 'Hue' in device['device_type']:
@@ -148,9 +148,9 @@ class DeviceAPI(Resource):
             device_index = device[0][0]
             device = device[0][1]
             del shelve_db['devices'][device_index]
-            return f'Deleted device {device}', 200
+            return 'Deleted device {}'.format(device), 200
         else:
-            return f'There is no device with device_id "{device_id}"', 404
+            return 'There is no device with device_id "{}"'.format(device_id), 404
 
 
 api.add_resource(DeviceListAPI, '/devices', endpoint='devices')

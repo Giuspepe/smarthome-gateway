@@ -72,38 +72,38 @@ class TestDeviceListAPI:
         rv = client.post('/devices', json=valid_mock_device_1)
         rv = json.loads(rv.data)
 
-        assert rv == f'Device with device_id \"{valid_mock_device_1["device_id"]}\" already exists'
+        assert rv == 'Device with device_id "{}" already exists'.format(valid_mock_device_1["device_id"])
 
 
 class TestDeviceAPI:
     def test_get(self, client):
         # get device from existing device_id
         valid_device_id = valid_mock_device_1['device_id']
-        rv = client.get(f'/devices/{valid_device_id}')
+        rv = client.get('/devices/{}'.format(valid_device_id))
         rv = json.loads(rv.data)
-        assert f'/devices/{valid_device_id}' in rv['uri']
+        assert '/devices/{}'.format(valid_device_id) in rv['uri']
         del rv['uri']
         assert rv == valid_mock_device_1
 
         # get device that doesn't exist
         rv = client.get('/devices/invalid_device_id')
         rv = json.loads(rv.data)
-        assert f'There is no device with device_id "invalid_device_id"' in rv
+        assert 'There is no device with device_id "invalid_device_id"' in rv
 
     def test_patch(self, client):
         valid_device_id = valid_mock_device_1['device_id']
         simple_device_attributes = ['device_name', 'device_type', 'device_controller_address']
         for attribute in simple_device_attributes:
-            rv = client.patch(f'/devices/{valid_device_id}', json={attribute: 'changed_attribute_value12345'})
+            rv = client.patch('/devices/{}'.format(valid_device_id), json={attribute: 'changed_attribute_value12345'})
             rv = json.loads(rv.data)
             assert rv[attribute] == 'changed_attribute_value12345'
 
 
 
-        rv = client.patch(f'/devices/{valid_device_id}', json={'device_id': 'changed_device_id12345'})
+        rv = client.patch('/devices/{}'.format(valid_device_id), json={'device_id': 'changed_device_id12345'})
         rv = json.loads(rv.data)
         assert rv['device_id'] == 'changed_device_id12345'
-        client.patch(f'/devices/changed_device_id12345', json={'device_id': '1234'})
+        client.patch('/devices/changed_device_id12345', json={'device_id': '1234'})
 
         changed_device_data = {
             "on": True,
@@ -121,7 +121,7 @@ class TestDeviceAPI:
             "mode": "test",
             "reachable": False}
 
-        rv = client.patch(f'/devices/{valid_device_id}', json={'device_data': changed_device_data})
+        rv = client.patch('/devices/{}'.format(valid_device_id), json={'device_data': changed_device_data})
         rv = json.loads(rv.data)
         assert rv == 'Device type "changed_attribute_value12345" not implemented yet'
         # TODO assert rv['device_data'] == changed_device_data
@@ -129,7 +129,7 @@ class TestDeviceAPI:
     def test_delete(self, client):
         # delete device
         device = copy.deepcopy(valid_mock_device_1)
-        rv = client.delete(f'/devices/{device["device_id"]}')
+        rv = client.delete('/devices/{}'.format(device["device_id"]))
         rv = rv.data
         assert 'Deleted device' in str(rv)
         devices = client.get('/devices')
@@ -138,9 +138,9 @@ class TestDeviceAPI:
 
         # delete device that doesn't exist
         device = copy.deepcopy(valid_mock_device_1)
-        rv = client.delete(f'/devices/{device["device_id"]}')
+        rv = client.delete('/devices/{}'.format(device["device_id"]))
         rv = str(rv.data)
-        assert f'There is no device with device_id' in rv
+        assert 'There is no device with device_id' in rv
 
 
 if __name__ == '__main__':

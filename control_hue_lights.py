@@ -8,7 +8,7 @@ def get_lights(api_root_url):
     light_id_list = []
     for light_id, light_info in lights.items():
         light_id_list.append(light_id)
-        print(f'Light id: {light_id} - Light name: {light_info["name"]}')
+        print('Light id: {} - Light name: {}'.format(light_id, light_info["name"]))
     return light_id_list
 
 
@@ -17,7 +17,7 @@ def get_light_info(api_light_url):
 
 
 def set_state(api_light_url, state):
-    return requests.put(f'{api_light_url}/state', json.dumps(state))
+    return requests.put('{}/state'.format(api_light_url), json.dumps(state))
 
 
 def turn_on(api_light_url):
